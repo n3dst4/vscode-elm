@@ -113,7 +113,7 @@ function parseErrorsElm018(line) {
   return <IElmIssue[]>JSON.parse(line);
 }
 
-function checkForErrors(filename): Promise<IElmIssue[]> {
+function checkForErrors(fullFilename): Promise<IElmIssue[]> {
   return new Promise((resolve, reject) => {
     const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
       'elm',
@@ -122,12 +122,14 @@ function checkForErrors(filename): Promise<IElmIssue[]> {
     const compiler: string = <string>config.get('compiler');
     const elmTestCompiler: string = <string>config.get('elmTestCompiler');
     const [cwd, elmVersion] = utils.detectProjectRootAndElmVersion(
-      filename,
+      fullFilename,
       vscode.workspace.rootPath,
     );
     const specialFile: string = <string>config.get('makeSpecialFile');
-    const isTestFile = elmTest.fileIsTestFile(filename);
+    const isTestFile = elmTest.fileIsTestFile(fullFilename);
     let make;
+
+    let filename = path.relative(cwd, fullFilename);
 
     if (specialFile.length > 0) {
       filename = path.resolve(cwd, specialFile);
@@ -135,8 +137,6 @@ function checkForErrors(filename): Promise<IElmIssue[]> {
     if (utils.isWindows) {
       filename = '"' + filename + '"';
     }
-
-
 
     const args018 = [filename, '--report', 'json', '--output', '/dev/null'];
     const args019 = [
@@ -154,11 +154,8 @@ function checkForErrors(filename): Promise<IElmIssue[]> {
         : compiler
       : make018Command;
 
-    if (utils.isWindows) {
-      make = cp.exec(makeCommand + ' ' + args.join(' '), { cwd: cwd });
-    } else {
-      make = cp.spawn(makeCommand, args, { cwd: cwd });
-    }
+    make = cp.exec(makeCommand + ' ' + args.join(' '), { cwd: cwd });
+
     // output is actually optional
     // (fixed in https://github.com/Microsoft/vscode/commit/b4917afe9bdee0e9e67f4094e764f6a72a997c70,
     // but unreleased at this time)
