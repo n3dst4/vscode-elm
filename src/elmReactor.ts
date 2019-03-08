@@ -17,7 +17,8 @@ function getReactorAndArguments(
   const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration(
     'elm',
   );
-  const dummyPath = path.join(vscode.workspace.rootPath, 'dummyfile');
+  const rootWorkspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+  const dummyPath = path.join(rootWorkspacePath, 'Hello.elm');
   const reactor018Command: string = 'elm-reactor';
   const compiler: string = <string>config.get('compiler');
   const [cwd, elmVersion] = utils.detectProjectRootAndElmVersion(
